@@ -53,9 +53,16 @@ class XMCQSXBlock(XBlock):
     """
     Provides multiple-choice questions block
     """
-    question = Dict(default='', scope=Scope.content, help='Question presented to user')
+    questions = List(default=[(1, {
+        'question': 'Which of the following languages is more suited to a structured program?',
+        'choices': [
+            {'id': 1, 'choice': 'PL/1'}, {'id': 2, 'choice': 'FORTRAN'},
+            {'id': 3, 'choice': 'BASIC'}, {'id': 4, 'choice': 'PASCAL'},
+        ],
+        'correct_choice': 4, 'hint': 'Relax & think!'
+    })], scope=Scope.content, help='Questions presented to user')
+    user_answers = Dict(default={'question_id': 'choice_id'}, scope=Scope.user_state)
     no_of_correct_answers = Integer(default=0, scope=Scope.user_state, help='No. of correct answers')
-    total_questions = Integer(default=5, scope=Scope.content, help='Total questions presented')
     progress = Integer(default=0, scope=Scope.user_state, help='Index of current question being attempted')
     completed = Boolean(default=False, scope=Scope.user_state, help='User has completed this set')
 
