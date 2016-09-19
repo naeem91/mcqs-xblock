@@ -6,7 +6,8 @@ function XMCQSEdit(runtime, element) {
 
         var qDiv = $('<div class="question">').append(
             $('<label>', {text: "Question: "}),
-            $('<input>', {type: 'text', class: 'question_text', name: 'question_' + id})
+            $('<input>', {type: 'text', class: 'question_text', name: 'question_' + id}),
+            $('<input>', {type: 'button', class: 'button del-question', value: 'Delete', 'data-id': id})
         );
         var choiceDiv = $('<div class="choices">');
         var hintDiv = $('<div class="hint">').append(
@@ -21,7 +22,9 @@ function XMCQSEdit(runtime, element) {
             ).appendTo(choiceDiv);
         }
 
-        $('<div>', {'class': 'question_block'}).append(qDiv, choiceDiv, hintDiv).appendTo($('form'));
+        $('<div>', {id: 'question_' + id, class: 'question_block'}).append(
+            qDiv, choiceDiv, hintDiv
+        ).appendTo($('#edit_form'));
     }
 
     function deleteQuestion() {
@@ -46,5 +49,5 @@ function XMCQSEdit(runtime, element) {
     
     $('#edit_submit', element).on('click', submitHandler);
     $('#add_question', element).on('click', addNewQuestion);
-    $('.del-question', element).on('click', deleteQuestion);
+    $(element).on('click', '.del-question', deleteQuestion);
 }

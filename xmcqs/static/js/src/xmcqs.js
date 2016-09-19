@@ -40,7 +40,9 @@ function XMCQSXBlock(runtime, element) {
             url: checkUrl,
             success: function(data){
                 $('#correct').text(data.correct_total);
-                $('#current').text(data.progress);
+                
+                // for quiz progress indication, add 1 to zeroth based index
+                $('#current').text(parseInt(data.current) + 1);
                 
                 if(data.correct == true){
                     displayQuestion(data.new_question);
@@ -59,7 +61,7 @@ function XMCQSXBlock(runtime, element) {
     // enable submit only after any selection
     $('#submit').attr('disabled', true);
 
-    $(document).on('change', 'input[name=choice]', function(){
+    $(element).on('change', 'input[name=choice]', function(){
         $('#submit').attr('disabled', false);
     });
 

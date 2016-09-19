@@ -150,6 +150,9 @@ class XMCQSXBlock(XBlock):
             else:
                 response['hint'] = question.get('hint')
 
+        # progress track
+        response.update({'current': self.current_question})
+
         return response
 
     @staticmethod
