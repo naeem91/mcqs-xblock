@@ -1,0 +1,37 @@
+<div class="xmcqs_edit">
+    <form id="edit_form">
+    {% for question_id, question in questions %}
+        <div class="question_block" id="question_{{ question_id }}">
+            <div class="question">
+                <label>Question: </label>
+                <input type="text" class="question_text" name="question_{{ question_id }}" value="{{ question.question }}" />
+                <input type="button" class="button del-question" data-id="{{ question_id }}" value="Delete" />
+            </div>
+            <div class="choices">
+                {% for choice in question.choices %}
+                    <div>
+                        <label>Choice {{ forloop.counter }}: </label>
+                        <input class="choice-input" type="text" name="choices_{{ question_id }}" value="{{ choice }}" />
+                        <input type="radio" name="correct_{{ question_id }}" value="{{ forloop.counter }}"
+                        {% if question.correct == forloop.counter|slugify %}checked="checked"{% endif %}/>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="hint">
+                <input placeholder="Hint" class="hint-input" type="text" name="hint_{{ question_id }}" value="{{ question.hint }}" />
+            </div>
+        </div>
+    {% endfor %}
+    </form>
+    <div class="form-actions">
+        <ul>
+            <li class="action-item">
+                <input type="button" id="add_question" href="#" class="button action-button" onclick="return false;" value="Add Question" />
+            </li>
+            <li class="action-item">
+                <input class="button action-primary" type="submit" id="edit_submit" value="Save" />
+            </li >
+            <br class="clear" />
+        </ul>
+    </div>
+</div>

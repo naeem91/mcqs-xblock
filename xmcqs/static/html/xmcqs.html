@@ -1,12 +1,30 @@
 <div class="xmcqs_block">
     <div id="progress">
-        Progress: <span id="current">{self.progress}</span>/ <span id="total">{self.total_questions}</span>
-        Correct: <span id="correct">{self.no_of_correct_answers}</span>
+        {% if not completed %}
+            Progress: <span id="current">{{ current }} / </span>{{ total }}</span>
+        {% endif %}
     </div>
+    {% if not completed %}
     <div id="question_block">
-        <p id="question" data-id=""></p>
-        <div id="choices"></div>
+        <p id="question" data-id="{{ question.id }}">{{ question.question }}</p>
+        <div id="choices">
+            {% for choice in question.choices %}
+            <div>
+                <label>
+                    <input type="radio" name="choice" value="{{ forloop.counter }}" />
+                   {{ choice }}
+                </label>
+           </div>
+            {% endfor %}
+        </div>
         <p id="hint"></p>
         <input type="button" id="submit" value="Submit"  />
     </div>
+    {% else %}
+    <div id="result_block">
+        <p>You have completed this quiz. Following is your result.</p>
+        <p>Total: {{ total }}</p>
+        <p>Correct: {{ correct }}</p>
+    </div>
+    {% endif %}
 </div>

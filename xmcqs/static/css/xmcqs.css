@@ -1,25 +1,25 @@
 /* CSS for XMCQSXBlock */
 
-.xmcqs_block .count {
-    font-weight: bold;
-}
-
-.xmcqs_block p {
-    cursor: pointer;
-}
-
 .xmcqs_block{
-    border: 1px solid #eeeeff;
-    width: 500px;
     padding: 10px;
 }
 #submit{
-    width:150px;height:30px;
+    width:150px;
+    height:40px;
     margin-top: 10px;
+    font-size: 18px;
+}
+#choices > div{
+    border: 1px solid #eeeeff;
+}
+#choices label {
+    cursor: pointer;
+    display: block;
+    padding: 15px;
+}
+#choices label:hover{
+    background-color: #EFEFEF;
 }
 #progress{
     font-size: 12px;
-}
-#hint{
-    display: none;
 }

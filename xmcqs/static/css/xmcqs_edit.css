@@ -1,0 +1,44 @@
+.question_block {
+    border: 1px solid #eeefff;
+    padding: 10px;
+}
+
+.question_text {
+    font-size: 14px;
+    height: 30px;
+    width: 70%;
+}
+
+.choices > div {
+    margin: 10px;
+}
+
+.choice-input {
+    font-size: 12px;
+    height: 20px;
+    width: 30%;
+}
+
+.hint-input {
+    font-size: 14px;
+    height: 30px;
+    width: 50%;
+}
+
+.button{
+    width:150px;
+    height:40px;
+    margin-top: 10px;
+    font-size: 18px;
+}
+
+.form-actions ul{
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.form-actions li{
+    float: left;
+    margin: 5px;
+}

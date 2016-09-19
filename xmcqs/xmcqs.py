@@ -1,69 +1,31 @@
 """Multiple-choice questions XBlock"""
 
+from collections import defaultdict
+
+from django.template import Template, Context
+
 import pkg_resources
 
 from xblock.core import XBlock
 from xblock.fields import Scope, String, List, Boolean, Dict, Integer
 from xblock.fragment import Fragment
 
-# ToDo: source of questions?
-questions = [
-    {
-        'id': 1, 'question': 'Which of the following languages is more suited to a structured program?',
-        'choices': [
-            {'id': 1, 'choice': 'PL/1'}, {'id': 2, 'choice': 'FORTRAN'},
-            {'id': 3, 'choice': 'BASIC'}, {'id': 4, 'choice': 'PASCAL'},
-        ],
-        'correct_choice': 4, 'hint': 'Relax & think!'
-    },
-    {
-        'id': 2,
-        'question': 'A computer assisted method for the recording and analyzing of existing or hypothetical systems is?',
-        'choices': [
-            {'id': 1, 'choice': 'Data transmission'}, {'id': 2, 'choice': 'Data flow'},
-            {'id': 3, 'choice': 'Data capture'}, {'id': 4, 'choice': 'Data processing'},
-        ],
-        'correct_choice': 2, 'hint': 'Relax & think!'
-    }, {
-        'id': 3, 'question': 'The Eiffel Tower is located where in Paris?',
-        'choices': [
-            {'id': 1, 'choice': 'Bois de Boulogne'}, {'id': 2, 'choice': 'Champ de Mars'},
-            {'id': 3, 'choice': 'Jardin des Plantes'}, {'id': 4, 'choice': 'Parc de Belleville'},
-        ],
-        'correct_choice': 2, 'hint': 'Relax & think!'
-    }, {
-        'id': 4, 'question': 'Which Apollo mission landed the first humans on the Moon?',
-        'choices': [
-            {'id': 1, 'choice': 'Apollo 7'}, {'id': 2, 'choice': 'Apollo 9'},
-            {'id': 3, 'choice': 'Apollo 11'}, {'id': 4, 'choice': 'Apollo 13'},
-        ],
-        'correct_choice': 3, 'hint': 'Relax & think!'
-    }, {
-        'id': 5, 'question': 'Who starred in the 1959 epic film Ben-Hur?',
-        'choices': [
-            {'id': 1, 'choice': 'Charlton Heston'}, {'id': 2, 'choice': 'Clark Gable'},
-            {'id': 3, 'choice': 'Errol Flynn'}, {'id': 4, 'choice': 'Lee Marvin'},
-        ],
-        'correct_choice': 1, 'hint': 'Relax & think!'
-    },
-]
-
 
 class XMCQSXBlock(XBlock):
     """
     Provides multiple-choice questions block
     """
-    questions = List(default=[(1, {
+    display_name = String(default='MCQS')
+    block_name = String(default='MCQS')
+
+    questions = List(default=[('1', {
         'question': 'Which of the following languages is more suited to a structured program?',
-        'choices': [
-            {'id': 1, 'choice': 'PL/1'}, {'id': 2, 'choice': 'FORTRAN'},
-            {'id': 3, 'choice': 'BASIC'}, {'id': 4, 'choice': 'PASCAL'},
-        ],
-        'correct_choice': 4, 'hint': 'Relax & think!'
+        'choices': ['PL/1', 'FORTRAN', 'BASIC', 'PASCAL'],
+        'correct': '4', 'hint': 'Relax & think!'
     })], scope=Scope.content, help='Questions presented to user')
-    user_answers = Dict(default={'question_id': 'choice_id'}, scope=Scope.user_state)
-    no_of_correct_answers = Integer(default=0, scope=Scope.user_state, help='No. of correct answers')
-    progress = Integer(default=0, scope=Scope.user_state, help='Index of current question being attempted')
+    user_answers = Dict(default={'1': 4}, scope=Scope.user_state, help='User answers against each question')
+
+    current_question = Integer(default=0, scope=Scope.user_state, help='Index of question being attempted by user')
     completed = Boolean(default=False, scope=Scope.user_state, help='User has completed this set')
 
     def resource_string(self, path):
@@ -76,59 +38,117 @@ class XMCQSXBlock(XBlock):
         The primary view of the XMCQSXBlock, shown to students
         when viewing courses.
         """
-        html = self.resource_string("static/html/xmcqs.html")
-        frag = Fragment(html.format(self=self))
+        if not context:
+            context = {}
+
+        context.update({
+            'current': self.current_question + 1, 'total': len(self.questions),
+            'completed': self.completed
+        })
+
+        if self.completed:
+            context.update(self.get_result())
+        else:
+            context.update({'question': self.get_next_question(index=self.current_question)})
+
+        html = Template(self.resource_string("static/html/xmcqs.html")).render(Context(context))
+        frag = Fragment(html)
         frag.add_css(self.resource_string("static/css/xmcqs.css"))
         frag.add_javascript(self.resource_string("static/js/src/xmcqs.js"))
         frag.initialize_js('XMCQSXBlock')
 
         return frag
 
-    def get_new_question(self):
-        next_index = self.progress if self.progress == 0 else self.progress + 1
-        self.progress += 1
+    def studio_view(self, context=None):
+        if not context:
+            context = {}
+
+        context.update({'questions': self.questions})
+
+        html = Template(self.resource_string("static/html/xmcqs_edit.html")).render(Context(context))
+
+        frag = Fragment(html)
+        frag.add_css(self.resource_string("static/css/xmcqs_edit.css"))
+        frag.add_javascript(self.resource_string("static/js/src/xmcqs_edit.js"))
+        frag.initialize_js('XMCQSEdit')
+
+        return frag
+
+    def get_next_question(self, index=None):
+        """ Get next question from the questions list """
+
+        next_index = index if index is not None else self.current_question + 1
 
         try:
-            question = questions[next_index].copy()
+            question = self.questions[next_index][1].copy()
+            question['id'] = self.questions[next_index][0]
         except IndexError:
             self.completed = True
-            return False
+            return self.get_result()
         else:
             # only send public data
-            question.pop('correct_choice')
+            question.pop('correct')
             question.pop('hint')
+
+            self.current_question = next_index
 
             return question
 
+    def get_result(self):
+        """ calculate user result in quiz """
+
+        answers = {q_id: question.get('correct') for q_id, question in self.questions}
+
+        correct_given = [q for q, ans in self.user_answers.items() if answers[q] == ans]
+
+        return {'total': len(answers), 'correct': len(correct_given)}
+
     @XBlock.json_handler
-    def get_question(self, data, suffix=''):
-        """
-        handler to present question
-        """
-        return self.get_new_question()
+    def studio_submit(self, data, suffix=''):
+        """ Handle studio data submission """
+
+        questions = defaultdict(dict)
+
+        # data extraction
+        for obj in data:
+            obj_type, question_id = obj.get('name', '_').split('_')
+            obj_value = obj.get('value')
+
+            if obj_type == "choices":
+                if not questions[question_id].get(obj_type):
+                    questions[question_id][obj_type] = []
+
+                questions[question_id][obj_type].append(obj_value)
+            else:
+                questions[question_id][obj_type] = obj_value
+
+        self.questions = questions.items()
+
+        return {'success': True, 'errors': []}
 
     @XBlock.json_handler
     def check_answer(self, data, suffix=''):
+        """ Check answer and provide next question or hint """
+
         response = dict(correct=False)
 
-        ans = int(data.get('ans', 0))
-        q = int(data.get('q', 0))
+        ans = data.get('ans', 0)
+        q = data.get('q', 0)
         hint_given = data.get('hint_given')
 
-        question = (item for item in questions if item["id"] == q).next()
+        question = (item[1] for item in self.questions if item[0] == q).next()
 
-        if ans == question.get('correct_choice'):
-            self.no_of_correct_answers += 1
-            response['new_question'] = self.get_new_question()
+        # store user responses
+        self.user_answers.update({q: ans})
+
+        if ans == question.get('correct'):
+            response['new_question'] = self.get_next_question()
             response['correct'] = True
         else:
             if hint_given:
-                response['new_question'] = self.get_new_question()
+                response['new_question'] = self.get_next_question()
             else:
                 response['hint'] = question.get('hint')
-
-        response['correct_total'] = self.no_of_correct_answers
-        response['progress'] = self.progress
 
         return response
 

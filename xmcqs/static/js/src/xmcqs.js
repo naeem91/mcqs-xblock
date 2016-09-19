@@ -4,9 +4,11 @@ function XMCQSXBlock(runtime, element) {
         // reset the elements
         $('#choices, #hint, #current #question').html('');
         
-        if(question == false){
-           $('#question_block').html('Questions completed!');
-            return
+        // if questions completed, display result
+        if(!question.question){
+           $('#question_block').html('<p>You have completed this quiz. Following is your result.</p>' +
+               '<p>Total:' + question.total + '</p><p>Correct: ' + question.correct + '</p>');
+            return;
         }
 
         var choices = question.choices;
@@ -14,31 +16,18 @@ function XMCQSXBlock(runtime, element) {
         $('#question', element).attr('data-id', question.id);
 
         for(var i in choices){
-            var choiceInput = $('<input>', {type: 'radio', value: choices[i].id, name: 'choice'});
-            var labelInput = $('<label>', {text: choices[i].choice});
+            var choiceInput = $('<input>', {type: 'radio', value: parseInt(i) + 1, name: 'choice'});
+            var label = $('<label>').append(choiceInput).append(choices[i]);
 
-            var inputDiv = $('<div>').append(choiceInput, labelInput);
+            var inputDiv = $('<div>').append(label);
 
             $('#choices').append(inputDiv);
         }
 
         $('#submit').attr('disabled', true);
-        $('input[name=choice]').on('change', function(){
-            $('#submit').attr('disabled', false);
-        });
     }
-
-    var questionUrl = runtime.handlerUrl(element, 'get_question');
+    
     var checkUrl = runtime.handlerUrl(element, 'check_answer');
-
-    function getQuestion(){
-        $.ajax({
-            type: "POST",
-            data: JSON.stringify({'count': 1}),
-            url: questionUrl,
-            success: displayQuestion
-        });
-    }
     
     function checkAnswer() {
         var question_id = $('#question', element).attr('data-id');
@@ -58,7 +47,7 @@ function XMCQSXBlock(runtime, element) {
                 }else{
                     if($('#hint').text() == "" && data.hint){
                         $('#hint', element).text('Hint: ' + data.hint);
-                        $('#hint', element).show('bounce');
+                        $('#hint', element).show('slow');
                     }else{
                         displayQuestion(data.new_question);
                     }
@@ -67,12 +56,14 @@ function XMCQSXBlock(runtime, element) {
         });
     }
 
+    // enable submit only after any selection
+    $('#submit').attr('disabled', true);
+
+    $(document).on('change', 'input[name=choice]', function(){
+        $('#submit').attr('disabled', false);
+    });
 
     $('#submit').on('click', function(e){
         checkAnswer();
-    });
-    
-    $(function ($) {
-        getQuestion();
     });
 }
